@@ -1,24 +1,5 @@
 [workspace]
 
 members = [
-    "net-starter",
     "net-config",
-    "net-core",
-    "net-agent",
-    "net-hub",
-    "net-translator",
-    "net-timescale",
-    "net-timescale-api",
-    "net-control",
-    "net-proto-api"
 ]
-
-[workspace.dependencies]
-log = "0.4.17"
-log4rs = "1.2.0"
-threadpool = "1.8.1"
-
-directories = "5.0.0"
-config = "0.13.3"
-serde = { version = "1.0.156", features = ["derive"] }
-toml = "0.7.3"

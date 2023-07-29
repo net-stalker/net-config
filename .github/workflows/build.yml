@@ -11,9 +11,7 @@ env:
 
 jobs:
   build:
-    #Should be changed by preconfigured docker image
     runs-on: ubuntu-latest
-#    container: net-stalker/net-parent
 
     steps:
       - name: Check out
@@ -46,80 +44,10 @@ jobs:
       - name: Update platform
         run: |
           sudo apt-get update
-          sudo apt-get install libpcap-dev libzmq3-dev tshark build-essential cmake capnproto
-
-      - name: Build and Install NNG
-        run: |
-          git clone https://github.com/nanomsg/nng.git
-          cd nng
-          mkdir build
-          cd build
-          cmake ..
-          make
-          sudo make install
-
+          sudo apt-get -y upgrade
+          
       - name: Build and Test
         env:
           CARGO_MANIFEST_DIR: ${{ github.workspace }}
         run: |
           cargo test
-  integration-tests:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Check out
-        uses: actions/checkout@v3
-
-      - name: Install Rust
-        run: rustup toolchain install stable --profile minimal
-
-      - name: Cache Cargo dependencies
-        uses: actions/cache@v3
-        continue-on-error: false
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: ${{ runner.os }}-cargo-
-
-      - name: Install cargo check tools
-        run: |
-          cargo install --locked cargo-deny || true
-          cargo install --locked cargo-outdated || true
-          cargo install --locked cargo-udeps || true
-          cargo install --locked cargo-audit || true
-          cargo install --locked cargo-pants || true      
-
-      - name: Update platform
-        run: |
-          sudo apt-get update
-          sudo apt-get install libpcap-dev libzmq3-dev tshark build-essential cmake capnproto
-
-      - name: Build and Install NNG
-        run: |
-          git clone https://github.com/nanomsg/nng.git
-          cd nng
-          mkdir build
-          cd build
-          cmake ..
-          make
-          sudo make install
-
-      - name: Build and Up timescaleDB
-        run: |
-          docker-compose build timescaledb && docker-compose up --detach timescaledb
-
-      - name: Build and Run timescaleDB migrations
-        run: |
-          docker-compose build timescaledb-migrations && docker-compose up timescaledb-migrations
-
-      - name: Build and Test
-        env:
-          CARGO_MANIFEST_DIR: ${{ github.workspace }}
-        run: |
-          cargo test --test "*" --features integration
-          docker-compose down
