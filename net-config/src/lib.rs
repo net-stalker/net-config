@@ -67,7 +67,7 @@ pub fn derive(input: TokenStream) -> TokenStream {
             pub fn build(&self) -> Result<#ident, config::ConfigError> {
                 log::debug!("{:?}", self);
 
-                let config_files = net_core::file::files::Files::find_files(&self.config_path, "toml");
+                let config_files = net_file::file::files::Files::find_files(&self.config_path, "toml");
                 log::debug!("found config files {:?}", config_files);
 
                 match Self::create_config(config_files) {
