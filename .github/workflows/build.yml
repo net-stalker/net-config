@@ -45,7 +45,11 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get -y upgrade
-          
+
+      - name: Configure Git
+        run: |
+          git config --global url."https://${{ secrets.GIT_CREDENTIALS }}@github.com".insteadOf ssh://github.com
+
       - name: Build and Test
         env:
           CARGO_MANIFEST_DIR: ${{ github.workspace }}
