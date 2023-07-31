@@ -12,6 +12,8 @@ pub fn derive(input: TokenStream) -> TokenStream {
     // let new_ident = syn::Ident::new("MyNewStruct", ident.span());
 
     let output = quote! {
+        pub use net_file;
+
         const CONFIG_DIR: &str = ".config";
         const PKG_NAME: &str = std::env!("CARGO_PKG_NAME");
 
