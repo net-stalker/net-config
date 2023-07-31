@@ -48,7 +48,7 @@ jobs:
 
       - name: Configure Git
         run: |
-          git config --global url."https://${{ secrets.GIT_CREDENTIALS }}@github.com".insteadOf ssh://github.com
+          git config --global url."https://${{ secrets.GIT_CREDENTIALS }}/github.com".insteadOf ssh://github.com
 
       - name: Build and Test
         env:
