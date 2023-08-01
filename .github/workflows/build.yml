@@ -48,8 +48,8 @@ jobs:
       - name: Give GitHub Actions access to repos
         uses: webfactory/ssh-agent@v0.5.4
         with:
-          ssh-private-key: ${{ NET_CORE_DEPLOY_KEY }}
-          
+          ssh-private-key: ${{ secrets.NET_CORE_DEPLOY_KEY }}
+
       - name: Build and Test
         env:
           CARGO_MANIFEST_DIR: ${{ github.workspace }}
