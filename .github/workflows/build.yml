@@ -44,12 +44,12 @@ jobs:
       - name: Update platform
         run: |
           sudo apt-get update
-          sudo apt-get -y upgrade
 
-      - name: Configure Git
-        run: |
-          git config --global url."https://${{ secrets.GIT_CREDENTIALS }}/github.com".insteadOf ssh://github.com
-
+      - name: Give GitHub Actions access to repos
+        uses: webfactory/ssh-agent@v0.5.4
+        with:
+          ssh-private-key: ${{ NET_CORE_DEPLOY_KEY }}
+          
       - name: Build and Test
         env:
           CARGO_MANIFEST_DIR: ${{ github.workspace }}
