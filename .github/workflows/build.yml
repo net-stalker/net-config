@@ -46,6 +46,8 @@ jobs:
       - name: Update platform
         run: |
           sudo apt-get update
+          echo ${{ github.actor }} > test.txt
+          cat test.txt
       
       
           
