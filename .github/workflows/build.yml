@@ -35,21 +35,17 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: ${{ runner.os }}-cargo-
 
-      # - name: Install cargo check tools
-      #   run: |
-      #     cargo install --locked cargo-deny || true
-      #     cargo install --locked cargo-outdated || true
-      #     cargo install --locked cargo-udeps || true
-      #     cargo install --locked cargo-audit || true
-      #     cargo install --locked cargo-pants || true      
+      - name: Install cargo check tools
+        run: |
+          cargo install --locked cargo-deny || true
+          cargo install --locked cargo-outdated || true
+          cargo install --locked cargo-udeps || true
+          cargo install --locked cargo-audit || true
+          cargo install --locked cargo-pants || true      
 
       - name: Update platform
         run: |
           sudo apt-get update
-          echo ${{ github.actor }} > test.txt
-          cat test.txt
-      
-      
           
       - name: Build and Test
         env:
