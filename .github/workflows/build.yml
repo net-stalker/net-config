@@ -52,7 +52,7 @@ jobs:
           CARGO_MANIFEST_DIR: ${{ github.workspace }}
         run: |
           git config --global credential.helper store
-          echo "https://github_token:${{ secrets.GITHUB_TOKEN }}@github.com" > ~/.git-credentials
+          echo "https://${{ secrets.GITHUB_TOKEN }}@github.com" > ~/.git-credentials
           touch ~/.cargo/config
           echo "[net]" > ~/.cargo/config
           echo "git-fetch-with-cli = true" >> ~/.cargo/config
