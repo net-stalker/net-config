@@ -55,7 +55,7 @@ jobs:
         run: |
           git config --global credential.helper store
           cat ${{ github.repository_owner }}
-          echo "https://${{ github.repository_owner }}:${{ github.token }}@github.com" > ~/.git-credentials
+          echo "https://${{ github.repository_owner }}:${{ secrets.PERSONAL_TOKEN_ACCESS_REPO }}@github.com" > ~/.git-credentials
           touch ~/.cargo/config
           echo "[net]" > ~/.cargo/config
           echo "git-fetch-with-cli = true" >> ~/.cargo/config
