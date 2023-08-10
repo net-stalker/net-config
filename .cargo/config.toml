@@ -1,3 +1,6 @@
 [env]
 RUST_LOG = "debug"
 #RUSTFLAGS = "-C debug_assertions=off"
+
+[registries]
+net-registry = { index = "https://github.com/net-stalker/net-registry-index.git" }

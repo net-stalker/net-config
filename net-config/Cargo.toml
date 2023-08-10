@@ -9,8 +9,4 @@ proc-macro = true
 [dependencies]
 quote = "1.0.26"
 syn = "2.0.5"
-net-file = { git = "ssh://github.com/net-stalker/net-core", branch = "develop" }
-
-
-[net]
-git-fetch-with-cli = true
+net-file = { version = "0.1.0", registry = "net-registry" }

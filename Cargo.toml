@@ -3,7 +3,3 @@
 members = [
     "net-config",
 ]
-
-
-[net]
-git-fetch-with-cli = true
