@@ -1,6 +1,6 @@
 name: Build project
 
-permissions: read-all
+permissions: read-all|write-all
 
 on:
   push:
@@ -54,7 +54,7 @@ jobs:
           CARGO_MANIFEST_DIR: ${{ github.workspace }}
         run: |
           git config --global credential.helper store
-          echo "https://${{ github.actor }}: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@github.com" > ~/.git-credentials
+          echo "https://${{ github.actor }}:${{ github.token }}@github.com" > ~/.git-credentials
           touch ~/.cargo/config
           echo "[net]" > ~/.cargo/config
           echo "git-fetch-with-cli = true" >> ~/.cargo/config
