@@ -42,7 +42,8 @@ jobs:
         run: |
           wget $VERSION_MODIFIER
           export SHORT_COMMIT_HASH=$(git rev-parse --short "$GITHUB_SHA")
-          python version-modifier.py
+          chmod +x version-modifier.py 
+          ./version-modifier.py $CARGO_MANIFEST_DIR $SHORT_COMMIT_HASH 
 
       - name: Cache Cargo dependencies
         uses: actions/cache@v3
@@ -75,8 +76,13 @@ jobs:
           cargo install cargo-index
 
       - name: Create crate packages
+        env:
+          CREATE_PACKAGES: https://raw.github.com/net-stalker/net-registry-index/develop/create-packages.py
+          CARGO_MANIFEST_DIR: ${{ github.workspace }}
         run: |
-          cargo package --allow-dirty
+          wget $CREATE_PACKAGES
+          chmod +x create-packages.py 
+          ./create-packages.py $CARGO_MANIFEST_DIR
 
       - name: Set up net-registry as git submodule
         env:
@@ -94,8 +100,9 @@ jobs:
           REGISTRY: ${{ github.workspace }}/net-registry-index
         run: |
           export SHORT_COMMIT_HASH=$(git rev-parse --short "$GITHUB_SHA")
+          chmod +x registry-maintainer.py 
+          ./registry-maintainer.py $PACKAGES_DIR $REGISTRY
           cd net-registry-index
-          python registry-maintainer.py
           git status
           git add *
           git add .
