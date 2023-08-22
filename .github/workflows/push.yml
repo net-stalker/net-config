@@ -1,0 +1,103 @@
+name: Update crates version
+on:
+  push:
+    branches-ignore:
+      - develop
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out
+        uses: actions/checkout@v3
+
+      - name: Install Rust
+        run: rustup toolchain install stable --profile minimal
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.x
+
+      - name: Install Python deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install toml
+      
+      - name: Set up GIT credentials
+        run: |
+          git config --global credential.helper store
+          echo "https://${{ secrets.OWNER }}:${{ secrets.OWNER_PAT }}@github.com" > ~/.git-credentials
+          git config --global user.email "test@netstalker.io"
+          git config --global user.name ${{ secrets.OWNER }}
+
+      - name: Update version and package crates
+        env:
+          CARGO_MANIFEST_DIR: ${{ github.workspace }}
+          VERSION_MODIFIER: https://raw.github.com/net-stalker/net-registry-index/develop/version-modifier.py
+        run: |
+          wget $VERSION_MODIFIER
+          export SHORT_COMMIT_HASH=$(git rev-parse --short "$GITHUB_SHA")
+          python version-modifier.py
+
+      - name: Cache Cargo dependencies
+        uses: actions/cache@v3
+        continue-on-error: false
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-
+      
+      - name: Install cargo check tools
+        run: |
+          cargo install --locked cargo-deny || true
+          cargo install --locked cargo-outdated || true
+          cargo install --locked cargo-udeps || true
+          cargo install --locked cargo-audit || true
+          cargo install --locked cargo-pants || true      
+
+      - name: Update platform
+        run: |
+          sudo apt-get update
+          sudo apt-get install libzmq3-dev build-essential cmake
+      
+      - name: Install cargo index
+        run: |
+          cargo install cargo-index
+
+      - name: Create crate packages
+        run: |
+          cargo package --allow-dirty
+
+      - name: Set up net-registry as git submodule
+        env:
+          REGISTRY_INDEX: https://github.com/net-stalker/net-registry-index.git
+          REGISTRY_MAINTAINER:  https://raw.github.com/net-stalker/net-registry-index/develop/registry-maintainer.py  
+        run: |
+          wget $REGISTRY_MAINTAINER
+          git submodule add $REGISTRY_INDEX
+          git submodule init
+          git submodule update
+
+      - name: Update registry index
+        env:
+          PACKAGES_DIR:  ${{ github.workspace }}/target/package
+          REGISTRY: ${{ github.workspace }}/net-registry-index
+        run: |
+          export SHORT_COMMIT_HASH=$(git rev-parse --short "$GITHUB_SHA")
+          cd net-registry-index
+          python registry-maintainer.py
+          git status
+          git add *
+          git add .
+          git commit -m "${{ github.action_repository }}: $SHORT_COMMIT_HASH"
+          git push
