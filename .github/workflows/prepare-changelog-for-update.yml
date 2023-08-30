@@ -1,0 +1,68 @@
+name: Prepare CHANGELOG.md for update
+
+on:
+  push:
+    branches: "develop"
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  prepare-changelog:
+    name: prepare-changelog
+    
+    permissions:
+      contents: write
+    
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.x
+
+      - name: Install Python deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install toml
+
+      - name: Set up GIT credentials
+        run: |
+          git config --global credential.helper store
+          echo "https://${{ secrets.OWNER }}:${{ secrets.OWNER_PAT }}@github.com" > ~/.git-credentials
+          git config --global user.email "test@netstalker.io"
+          git config --global user.name ${{ secrets.OWNER }}
+      
+      - name: Get script for changelog prepearing
+        env:
+          CHANGELOG_UPDATOR: https://raw.github.com/net-stalker/net-registry-index/develop/scripts/changelog/changelog-updator.py
+        run: |
+          wget $CHANGELOG_UPDATOR
+          chmod +x changelog-updator.py
+
+      - name: Prepare CHANGELOG.md for a new log
+        env:
+          CARGO_MANIFEST_DIR: ${{ github.workspace }}
+        run: |
+          echo "${{ github.event.head_commit.message }}"
+          export GIT_MSG="${{ github.event.head_commit.message }}"
+          export GIT_HASH=$(git rev-parse --short "$GITHUB_SHA")
+          cat CHANGELOG.md
+          ./changelog-updator.py $CARGO_MANIFEST_DIR
+          cat CHANGELOG.md
+          git add CHANGELOG.md
+          git commit -m "$GIT_MSG"
+          git push
+
+      - name: Repository Dispatch
+        uses: peter-evans/repository-dispatch@v2
+        with:
+          token: ${{ secrets.OWNER_PAT }}
+          event-type: prepare-changelog
+          client-payload: '{"message": "${{ github.event.head_commit.message }}"}'
+
+

@@ -1,0 +1,76 @@
+name: Update CHANGELOG.md
+
+on:
+ repository_dispatch:
+    types: [prepare-changelog]
+
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  update-changelog:
+    name: update-changelog
+    
+    permissions:
+      contents: write
+    
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.OWNER_PAT }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.x
+
+      - name: Install Python deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install toml
+
+      - name: Set up GIT credentials
+        run: |
+          git config --global credential.helper store
+          echo "https://${{ secrets.OWNER }}:${{ secrets.OWNER_PAT }}@github.com" > ~/.git-credentials
+          git config --global user.email "test@netstalker.io"
+          git config --global user.name ${{ secrets.OWNER }}
+
+      - name: Get version getter from cargo manifest
+        env:
+          VERSION_GETTER: https://raw.github.com/net-stalker/net-registry-index/develop/get-manifest-version.py
+        run: |
+          wget $VERSION_GETTER
+          chmod +x get-manifest-version.py
+
+      - name: Get date getter
+        env: 
+          DATE_GETTER: https://raw.github.com/net-stalker/net-registry-index/develop/get-current-date.py
+        run: |
+          wget $DATE_GETTER
+          chmod +x get-current-date.py
+
+      - name: Get changelog update
+        id: changelog-update
+        env:
+          CARGO_MANIFEST_DIR: ${{ github.workspace }}
+        run: |
+          export MANIFEST_VERSION=$(./get-manifest-version.py "$CARGO_MANIFEST_DIR")
+          export CURRENT_DATE=$(./get_current_date.py)
+          export GIT_HASH=$(git rev-parse --short "$GITHUB_SHA")
+          export TAG_AND_DATE=$"## [$MANIFEST_VERSION-$GIT_HASH] - $CURRENT_DATE"
+         
+          echo "CHANGE_LOG=$TAG_AND_DATE" >> "$GITHUB_OUTPUT" 
+
+          echo "${{ github.event.client_payload.message }}"
+      
+      - name: Add a new changelog
+        uses: wow-actions/update-file@v1
+        with:
+          path: CHANGELOG.md
+          GITHUB_TOKEN: ${{ secrets.OWNER_PAT }}
+          content: "${{ steps.changelog-update.outputs.CHANGE_LOG }}\n\n${{ github.event.client_payload.message }}"
