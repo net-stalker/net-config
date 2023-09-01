@@ -26,9 +26,12 @@ jobs:
           python-version: 3.x
 
       - name: Install Python deps
+        env:
+          REQUIREMENTS: https://raw.github.com/net-stalker/net-registry-index/develop/scripts/requirements.txt
         run: |
+          wget $REQUIREMENTS
           python -m pip install --upgrade pip
-          pip install toml
+          pip install -r requirements.txt
 
       - name: Set up GIT credentials
         run: |
@@ -39,10 +42,10 @@ jobs:
       
       - name: Get script for changelog prepearing
         env:
-          CHANGELOG_UPDATOR: https://raw.github.com/net-stalker/net-registry-index/develop/scripts/changelog/changelog-updator.py
+          CHANGELOG_PREPARATOR: https://raw.github.com/net-stalker/net-registry-index/develop/scripts/changelog_preparator.py
         run: |
-          wget $CHANGELOG_UPDATOR
-          chmod +x changelog-updator.py
+          wget $CHANGELOG_PREPARATOR
+          chmod +x changelog_preparator.py
 
       - name: Prepare CHANGELOG.md for a new log
         env:
@@ -52,7 +55,7 @@ jobs:
           export GIT_MSG="${{ github.event.head_commit.message }}"
           export GIT_HASH=$(git rev-parse --short "$GITHUB_SHA")
           cat CHANGELOG.md
-          ./changelog-updator.py $CARGO_MANIFEST_DIR
+          ./changelog_preparator.py $CARGO_MANIFEST_DIR
           cat CHANGELOG.md
           git add CHANGELOG.md
           git commit -m "$GIT_MSG"

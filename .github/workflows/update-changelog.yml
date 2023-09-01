@@ -29,9 +29,12 @@ jobs:
           python-version: 3.x
 
       - name: Install Python deps
+        env:
+          REQUIREMENTS: https://raw.github.com/net-stalker/net-registry-index/develop/scripts/requirements.txt
         run: |
+          wget $REQUIREMENTS
           python -m pip install --upgrade pip
-          pip install toml
+          pip install -r requirements.txt
 
       - name: Set up GIT credentials
         run: |
@@ -40,19 +43,25 @@ jobs:
           git config --global user.email "test@netstalker.io"
           git config --global user.name ${{ secrets.OWNER }}
 
+      - name: Get core.py from net-registry-index/scripts
+        env:
+          CORE: https://raw.github.com/net-stalker/net-registry-index/develop/scripts/core.py
+        run: |
+          wget $CORE
+
       - name: Get version getter from cargo manifest
         env:
-          VERSION_GETTER: https://raw.github.com/net-stalker/net-registry-index/develop/get-manifest-version.py
+          VERSION_GETTER: https://raw.github.com/net-stalker/net-registry-index/develop/scripts/get_manifest_version.py
         run: |
           wget $VERSION_GETTER
-          chmod +x get-manifest-version.py
+          chmod +x get_manifest_version.py
 
       - name: Get date getter
         env: 
-          DATE_GETTER: https://raw.github.com/net-stalker/net-registry-index/develop/get-current-date.py
+          DATE_GETTER: https://raw.github.com/net-stalker/net-registry-index/develop/scripts/get_current_date.py
         run: |
           wget $DATE_GETTER
-          chmod +x get-current-date.py
+          chmod +x get_current_date.py
 
       - name: Get changelog update
         id: changelog-update
