@@ -1,0 +1,124 @@
+name: Update crates version
+on:
+  push:
+    branches: ["*"]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out
+        uses: actions/checkout@v3
+
+      - name: Install Rust
+        run: rustup toolchain install stable --profile minimal
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.x
+
+      - name: Install Python deps
+        env:
+          REQUIREMENTS: https://raw.github.com/net-stalker/net-registry-index/develop/scripts/requirements.txt
+        run: |
+          wget $REQUIREMENTS
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      
+      - name: Set up GIT credentials
+        run: |
+          git config --global credential.helper store
+          echo "https://${{ secrets.OWNER }}:${{ secrets.OWNER_PAT }}@github.com" > ~/.git-credentials
+          git config --global user.email "test@netstalker.io"
+          git config --global user.name ${{ secrets.OWNER }}
+
+      - name: Update version and package crates
+        env:
+          CARGO_MANIFEST_DIR: ${{ github.workspace }}
+          CORE: https://raw.github.com/net-stalker/net-registry-index/develop/scripts/core.py
+          VERSION_MODIFIER: https://raw.github.com/net-stalker/net-registry-index/develop/scripts/version_modifier.py
+        run: |
+          wget $CORE
+          wget $VERSION_MODIFIER
+          export SHORT_COMMIT_HASH=$(git rev-parse --short "$GITHUB_SHA")
+          chmod +x version_modifier.py 
+          ./version_modifier.py $CARGO_MANIFEST_DIR $SHORT_COMMIT_HASH 
+
+      - name: Cache Cargo dependencies
+        uses: actions/cache@v3
+        continue-on-error: false
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-
+      
+      - name: Install cargo check tools
+        run: |
+          cargo install --locked cargo-deny || true
+          cargo install --locked cargo-outdated || true
+          cargo install --locked cargo-udeps || true
+          cargo install --locked cargo-audit || true
+          cargo install --locked cargo-pants || true      
+
+      - name: Update platform
+        run: |
+          sudo apt-get update
+          sudo apt-get install libzmq3-dev build-essential cmake libpcap-dev
+
+      - name: Build and Install NNG
+        run: |
+          git clone https://github.com/nanomsg/nng.git
+          cd nng
+          mkdir build
+          cd build
+          cmake ..
+          make
+          sudo make install
+      
+      - name: Install cargo index
+        run: |
+          cargo install cargo-index
+
+      - name: Create crate packages
+        env:
+          CREATE_PACKAGES: https://raw.github.com/net-stalker/net-registry-index/develop/scripts/create_packages.py
+          CARGO_MANIFEST_DIR: ${{ github.workspace }}
+        run: |
+          wget $CREATE_PACKAGES
+          chmod +x create_packages.py 
+          ./create_packages.py $CARGO_MANIFEST_DIR
+
+      - name: Set up net-registry as git submodule
+        env:
+          REGISTRY_INDEX: https://github.com/net-stalker/net-registry-index.git
+          REGISTRY_MAINTAINER:  https://raw.github.com/net-stalker/net-registry-index/develop/scripts/registry_maintainer.py  
+        run: |
+          wget $REGISTRY_MAINTAINER
+          git submodule add $REGISTRY_INDEX
+          git submodule init
+          git submodule update
+
+      - name: Update registry index
+        env:
+          PACKAGES_DIR:  ${{ github.workspace }}/target/package
+          REGISTRY: ${{ github.workspace }}/net-registry-index
+        run: |
+          export SHORT_COMMIT_HASH=$(git rev-parse --short "$GITHUB_SHA")
+          chmod +x registry_maintainer.py 
+          ./registry_maintainer.py $PACKAGES_DIR $REGISTRY
+          cd net-registry-index
+          git status
+          git add *
+          git add .
+          git commit -m "${{ github.event.repository.name }}: $SHORT_COMMIT_HASH"
+          git push
