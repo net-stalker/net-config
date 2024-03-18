@@ -2,6 +2,8 @@
 name = "net-config"
 version = "0.1.0"
 edition = "2021"
+description = "This crate defines core macros for the configuration of all the binaries in the netstalker project. It is used to define the configuration of the binaries in the net project."
+license = "Apache-2.0"
 
 [lib]
 proc-macro = true
@@ -9,7 +11,4 @@ proc-macro = true
 [dependencies]
 quote = "1.0.26"
 syn = "2.0.5"
-net-file = { version = "0.1.0", registry = "net-registry" }
-
-[net]
-git-fetch-with-cli = true
+net-file = "0.1.0"
