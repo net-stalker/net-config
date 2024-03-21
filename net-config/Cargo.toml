@@ -1,6 +1,6 @@
 [package]
 name = "net-config"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 description = "This crate defines core macros for the configuration of all the binaries in the netstalker project. It is used to define the configuration of the binaries in the net project."
 license = "Apache-2.0"
