@@ -18,6 +18,10 @@ pub fn derive(input: TokenStream) -> TokenStream {
         const PKG_NAME: &str = std::env!("CARGO_PKG_NAME");
 
         impl #ident {
+            pub fn new(path: &str) -> NetConfigBuilder {
+                NetConfigBuilder::default().with_config_dir(path.to_string())
+            }
+
             pub fn builder() -> NetConfigBuilder {
                 NetConfigBuilder::default()
             }
